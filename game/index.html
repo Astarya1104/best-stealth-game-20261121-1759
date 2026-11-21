@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEEDKEEPER — a quiet theft at dawn</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <header id="hud">
+    <div class="brand">SEEDKEEPER</div>
+    <div class="stat" title="Heirloom seed packets collected">🌱 Seeds <b id="seeds">0 / 3</b></div>
+    <div class="stat" title="Lives left">Lives <b id="lives">🌱🌱🌱</b></div>
+    <div class="stat" title="Time">⏱ <b id="time">0:00</b></div>
+    <div class="stat eye-stat" title="Suspicion — the highest of any gardener">
+      <span class="eye" id="eye">👁</span><span class="eye-bar"><span class="eye-fill" id="eyeFill"></span></span>
+    </div>
+    <div class="stat" title="Pebble toss cooldown">🪨 <b id="pebble">Pebble ready</b></div>
+    <button id="muteBtn" type="button" title="Mute / unmute (M)">🔊</button>
+    <button id="restartBtn" type="button" title="Restart (R)">↺</button>
+  </header>
+
+  <div id="stage">
+    <canvas id="game" width="960" height="600"></canvas>
+    <div id="overlay">
+      <h1 id="overlayTitle">SEEDKEEPER</h1>
+      <p id="overlayBody">A quiet theft at dawn in the seed library. Collect 3 heirloom packets and slip out the gate — unseen.</p>
+      <button id="startBtn" type="button">Begin the theft</button>
+      <p class="controls">WASD / arrows to move · Shift to sneak · Click to toss a pebble · R to restart · M to mute</p>
+    </div>
+  </div>
+
+  <p id="message"></p>
+  <p id="hint">Guards patrol the beds — learn their routes. Flower beds hide you; hedges block their sight. A pebble draws the nearest gardener away. <span id="state">title</span></p>
+</div>
+
+<script type="module">
+import { Game } from './game.js';
+
+const hud = {
+  seeds: document.getElementById('seeds'),
+  lives: document.getElementById('lives'),
+  time: document.getElementById('time'),
+  eye: document.getElementById('eye'),
+  eyeFill: document.getElementById('eyeFill'),
+  pebble: document.getElementById('pebble'),
+  message: document.getElementById('message'),
+  state: document.getElementById('state'),
+  overlay: document.getElementById('overlay'),
+  overlayTitle: document.getElementById('overlayTitle'),
+  overlayBody: document.getElementById('overlayBody'),
+};
+
+const game = new Game(document.getElementById('game'), hud);
+document.getElementById('startBtn').addEventListener('click', () => game.start());
+document.getElementById('restartBtn').addEventListener('click', () => game.resetToTitle());
+document.getElementById('muteBtn').addEventListener('click', () => game.toggleMute());
+
+// Maker hook, used only to stage screenshots and play-tests: it teleports
+// the player and reads live state. It never changes how the game plays.
+window.__seedkeeper = {
+  game,
+  state: () => ({
+    state: game.state,
+    player: { x: game.player.x, y: game.player.y, seeds: game.player.seeds, hidden: game.player.hidden },
+    guards: game.guards.map((g) => ({ name: g.name, x: g.x, y: g.y, state: g.state, suspicion: Math.round(g.suspicion) })),
+    gateOpen: game.gateOpen,
+    lives: game.lives,
+    elapsed: game.elapsed,
+  }),
+  teleport: (x, y) => { game.player.x = x; game.player.y = y; },
+  setSuspicion: (v) => { for (const g of game.guards) g.suspicion = v; },
+  start: () => game.start(),
+};
+
+game.run();
+</script>
+</body>
+</html>
